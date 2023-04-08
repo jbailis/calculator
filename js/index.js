@@ -1,6 +1,6 @@
 // Calculator Data Storage
 class Expression {
-  constructor(firstNum = 0) {
+  constructor(firstNum = '') {
     this.firstNum = firstNum;
     this.secondNum = '';
     this.operator = '';
@@ -8,18 +8,21 @@ class Expression {
   };
 
   get isComplete() {
-    return this.equals;
+    return this.firstNum && this.secondNum &&
+           this.operator;
   };
 
   get solution() {
-    return operate(Number(this.firstNum), Number(this.secondNum), OPERATORS[this.operator]);
+    if (this.isComplete) {
+      return operate(Number(this.firstNum), Number(this.secondNum), OPERATORS[this.operator]);
+    };
   };
 
   set nextInput(eventStr) {
-    eventStr === "=" ? this.equals = true
+    eventStr === "="        ? this.equals = true
     : eventStr in OPERATORS ? this.operator = eventStr
-    : !this.operator ? this.firstNum += eventStr
-    : this.secondNum += eventStr
+    : !this.operator        ? this.firstNum += eventStr
+    :                         this.secondNum += eventStr
   };
 }
 
@@ -43,26 +46,43 @@ const operate = (a, b, op) => op(a, b);
 const appendToDisplay = str => resultWindow.textContent += str;
 const clearDisplay = () => resultWindow.textContent = '';
 
+const deleteButton = () => {
+  clearDisplay();
+  expression = new Expression();
+};
+
+const equalsButton = () => {
+  clearDisplay();
+  appendToDisplay(expression.solution);
+};
+
+const checkButton = {
+  'X': deleteButton,
+  '=': equalsButton,
+};
+
 // Do Event Handling
 function buttonEvent() {
   const eventStr = this.textContent;
 
-  // Case: user presses clear-all button
-  if (eventStr === 'X') {
-    clearDisplay();
-    expression = new Expression();
+  // User presses delete or equals
+  if (eventStr in checkButton) {
+    checkButton[eventStr]();
     return;
   };
 
-  appendToDisplay(eventStr);
-
-  expression.nextInput = eventStr;
-
-  // Case: user presses equals at a valid time
+  // Expression already has 2 numbers and an operator
   if (expression.isComplete) {
-    clearDisplay();
-    appendToDisplay(expression.solution);
+    if (eventStr in OPERATORS) {
+      expression = new Expression(expression.solution);
+    } else {
+      expression = new Expression();
+      clearDisplay();
+    };
   };
+
+  appendToDisplay(eventStr);
+  expression.nextInput = eventStr;
 };
 
 // Add Event Handlers
